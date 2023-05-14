@@ -1,56 +1,43 @@
 import requests
-
 import bs4
 
 from telegram.ext import Updater, CommandHandler
 
-# Get your API ID and API hash from https://api.telegram.org/botfather
 
-API_ID = 123456789
+# Define your bot token here
+BOT_TOKEN = '6201307785:AAGZrQXOhM7m70Gcne4mTBuInrmc_Ta5dyY'
 
-API_HASH = 'your_api_hash'
 
-# Get your bot token from https://t.me/botfather
-
-BOT_TOKEN = 'your_bot_token'
-
-# Create the updater
-
-updater = Updater(token=BOT_TOKEN, use_context=True)
-
-# Define a command handler for the /search command
-
-@updater.command(command='search')
-
-def search(update, context):
-
-    # Get the anime name from the user
-
-    query = update.message.text
-
-    # Scrape the download links from 9anime.to
-
-    url = 'https://9anime.to/search?q=' + query
-
+def anime_search(update, context):
+    """Searches for anime and returns a download link."""
+    query = ' '.join(context.args)
+    url = "https://www.zoro.to/search?q=" + query
     response = requests.get(url)
+    soup = bs4.BeautifulSoup(response.content, "html.parser")
+    results = soup.find_all("div", class_="col-sm-6 col-md-4 col-lg-3")
+    for result in results:
+        title = result.find("a", class_="title").text
+        link = result.find("a", class_="title").get("href")
+        context.bot.send_message(chat_id=update.effective_chat.id, text=title + " - " + link)
 
-    soup = bs4.BeautifulSoup(response.content, 'html.parser')
 
-    # Find the download links
+def start(update, context):
+    """Sends a welcome message when the bot is started."""
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Welcome to the anime download bot! Send me the name of an anime to get a download link.")
 
-    download_links = soup.find_all('a', class_='btn btn-success btn-sm')
 
-    # Send the download links to the user
+def main():
+    """Starts the bot."""
+    # Set up the bot and its handlers
+    updater = Updater(token=BOT_TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("anime", anime_search, pass_args=True))
 
-    for download_link in download_links:
+    # Start the bot
+    updater.start_polling()
+    updater.idle()
 
-        context.bot.send_message(chat_id=update.effective_chat.id, text=download_link['href'])
 
-# Start the bot
-
-updater.start_polling()
-
-# Run the bot until you press Ctrl+C
-
-updater.idle()
-
+if __name__ == "__main__":
+    main()
