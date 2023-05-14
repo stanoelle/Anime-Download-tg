@@ -11,7 +11,7 @@ def anime_search(update, context):
     """Searches for anime and returns a download link."""
     query = ' '.join(context.args)
     url = "https://www.gogoanime.io/search.html?keyword=" + query
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
     soup = BeautifulSoup(response.content, "html.parser")
     results = soup.find_all("div", class_="last_episodes loaddub")
     for result in results:
