@@ -36,7 +36,7 @@ def main():
 
     """Starts the bot."""
 
-    updater = Updater("TOKEN")
+    updater = Updater("6201307785:AAGZrQXOhM7m70Gcne4mTBuInrmc_Ta5dyY")
 
     updater.dispatcher.add_handler(CommandHandler("start", start))
 
