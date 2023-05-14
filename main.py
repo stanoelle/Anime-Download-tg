@@ -4,7 +4,7 @@ from telegram.ext import Updater, CommandHandler
 
 
 # Define your bot token here
-BOT_TOKEN = '6201307785:AAGZrQXOhM7m70Gcne4mTBuInrmc_Ta5dyY
+BOT_TOKEN = '6201307785:AAGZrQXOhM7m70Gcne4mTBuInrmc_Ta5dyY'
 
 
 def anime_search(update, context):
