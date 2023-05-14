@@ -1,52 +1,39 @@
 import requests
+from bs4 import BeautifulSoup
 
-import bs4
+from telegram import Update, Dispatcher, CommandHandler
 
-from telegram.ext import Updater, CommandHandler
 
-def anime_search(bot, update, args):
+def get_anime_link(anime_name):
+  """Gets the download link for an anime from Zoro.to."""
+  url = f"https://www.zoro.to/search?q={anime_name}"
+  response = requests.get(url)
+  soup = BeautifulSoup(response.content, "html.parser")
+  links = soup.find_all("a", class_="btn btn-success btn-block")
+  return links[0]["href"]
 
-    """Searches for anime and returns a download link."""
 
-    query = args[0]
+def start(update: Update, context: Dispatcher):
+  """Sends a welcome message to the user."""
+  update.message.reply_text("Welcome to the anime bot! You can search for anime by typing /search <anime_name>.")
 
-    url = "https://www.zoro.to/search?q=" + query
 
-    response = requests.get(url)
+def search(update: Update, context: Dispatcher):
+  """Searches for an anime and sends the download link to the user."""
+  anime_name = update.message.text.split()[1]
+  link = get_anime_link(anime_name)
+  update.message.reply_text(link)
 
-    soup = bs4.BeautifulSoup(response.content, "html.parser")
-
-    results = soup.find_all("div", class_="col-sm-6 col-md-4 col-lg-3")
-
-    for result in results:
-
-        title = result.find("a", class_="title").text
-
-        link = result.find("a", class_="title").get("href")
-
-        bot.send_message(update.message.chat_id, title + " - " + link)
-
-def start(bot, update):
-
-    """Sends a welcome message when the bot is started."""
-
-    bot.send_message(update.message.chat_id, "Welcome to the anime download bot! Send me the name of an anime to get a download link.")
-
-def main():
-
-    """Starts the bot."""
-
-    updater = Updater("6201307785:AAGZrQXOhM7m70Gcne4mTBuInrmc_Ta5dyY")
-
-    updater.dispatcher.add_handler(CommandHandler("start", start))
-
-    updater.dispatcher.add_handler(CommandHandler("anime", anime_search))
-
-    updater.start_polling()
-
-    updater.idle()
 
 if __name__ == "__main__":
+  # Create the updater and dispatcher
+  updater = Updater("6201307785:AAGZrQXOhM7m70Gcne4mTBuInrmc_Ta5dyY")
+  dispatcher = updater.dispatcher
 
-    main()
+  # Add the handlers
+  dispatcher.add_handler(CommandHandler("start", start))
+  dispatcher.add_handler(CommandHandler("search", search))
 
+  # Start the bot
+  updater.start_polling()
+  updater.idle()
