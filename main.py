@@ -1,42 +1,29 @@
+import telebot
 import requests
 from bs4 import BeautifulSoup
-from telegram.ext import Updater, CommandHandler
 
+bot = telebot.TeleBot('YOUR_BOT_TOKEN')
 
-# Define your bot token here
-BOT_TOKEN = '6201307785:AAGy3-NCVxcI9PY2ZjCnPvZJOFMfo4_k0CA'
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, 'Hello! I am a movie download bot. Just send me the name of the movie you want to download and I will provide direct download links.')
 
-
-def anime_search(update, context):
-    """Searches for anime and returns a download link."""
-    query = ' '.join(context.args)
-    url = "https://www.gogoanime.io/search.html?keyword=" + query
-    response = requests.get(url, timeout=10)
-    soup = BeautifulSoup(response.content, "html.parser")
-    results = soup.find_all("div", class_="last_episodes loaddub")
-    for result in results:
-        title = result.find("p", class_="name").text
-        link = result.find("a").get("href")
-        context.bot.send_message(chat_id=update.effective_chat.id, text=f"{title} - {link}")
-
-
-def start(update, context):
-    """Sends a welcome message when the bot is started."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Welcome to the anime download bot! Send me the name of an anime to get a download link.")
-
-
-def main():
-    """Starts the bot."""
-    # Set up the bot and its handlers
-    updater = Updater(token=BOT_TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("anime", anime_search, pass_args=True))
-
-    # Start the bot
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == "__main__":
-    main()
+@bot.message_handler(func=lambda msg: msg.text is not None) 
+def send_movie_links(message):
+    movie_name = message.text
+    search_queries = [
+        f'index of {movie_name} mkv',
+        f'index of {movie_name} mp4'
+    ]
+    for query in search_queries:
+        response = requests.get(f'https://google.com/search?q={query}')
+        soup = BeautifulSoup(response.text, 'html.parser')
+        links = soup.find_all('a')
+        send_links = ''
+        for link in links:
+            if any(name in link.get('href') for name in ['mp4', 'mkv']):
+                send_links += link.get('href') + '\n'
+        if send_links:
+            bot.reply_to(message, send_links)
+            break
+bot.infinity_polling()
