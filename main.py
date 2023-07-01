@@ -11,19 +11,23 @@ def search(message):
     # Get the movie title from the user's message
     title = message.text.replace('/search ', '')
 
-    # Search for the movie on the download website
-    response = requests.get(f'https://yts.mx/browse-movies/{title}/all/all/0/latest')
-    soup = BeautifulSoup(response.text, 'html.parser')
-    movie_links = soup.find_all('a', {'class': 'browse-movie-title'})
+    # Send a GET request to the download website's search page
+    url = f'https://yts.mx/browse-movies/{title}/all/all/0/latest'
+    response = requests.get(url)
 
-    # If there are no search results, let the user know
-    if not movie_links:
-        bot.reply_to(message, 'Sorry, no results found. Please try again with a different search term.')
+    # Parse the HTML response using BeautifulSoup
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find the download link for the first search result
+    download_links = soup.select('.download-torrent > a[href^="magnet"]')
+    if not download_links:
+        bot.reply_to(message, f"Sorry, no results found for '{title}'. Please try again with a different search term.")
         return
 
-    # Otherwise, send the user the first movie's download link
-    movie_link = movie_links[0]['href']
-    bot.reply_to(message, f'Here is the download link for {title}: {movie_link}')
+    magnet_link = download_links[0]['href']
+    bot.reply_to(message, f"Here's the magnet link for '{title}': {magnet_link}")
 
+# Start the bot
+bot.polling()
 # Start the bot
 bot.polling()
