@@ -11,7 +11,7 @@ def search_movie(message):
     movie_name = ' '.join(message.text.split()[1:])
     with client:
         for dialog in client.iter_dialogs():
-            dialog.chat.title == 'YOUR_CHANNEL_NAME':
+            dialog.chat.title == 'moviessfreeee':
                 for message in client.search_messages(dialog.chat.id, query=movie_name):
                     bot.send_document(message.chat.id, message.document.file_id)
 bot.polling()
