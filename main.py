@@ -1,33 +1,61 @@
 import telebot
-import requests
-from bs4 import BeautifulSoup
+from pyrogram import Client
+from pyrogram.errors import UserNotParticipant, ChatAdminRequired
 
-# Create a new Telegram bot
-bot = telebot.TeleBot('6201307785:AAG0gB_uqvs9_konxBuLouEH9fwvwIQdzsM')
+# Telegram Bot token
+TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
 
-# Define the command to search for movies
-@bot.message_handler(commands=['search'])
-def search(message):
-    # Get the movie title from the user's message
-    title = message.text.replace('/search ', '')
+# Pyrogram session configuration
+API_ID = 'YOUR_API_ID'
+API_HASH = 'YOUR_API_HASH'
+SESSION_NAME = 'YOUR_SESSION_NAME'
+# Replace 'movie_channel' with the name or ID of your movie channel
+movie_channel = 'your_movie_channel_name_or_id'
 
-    # Send a GET request to the download website's search page
-    url = f'https://yts.mx/browse-movies/{title}/all/all/0/latest'
-    response = requests.get(url)
 
-    # Parse the HTML response using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
+# Create a Pyrogram client
+pyro_client = Client(SESSION_NAME, api_id=API_ID, api_hash=API_HASH)
 
-    # Find the download link for the first search result
-    download_links = soup.select('.download-torrent > a[href^="magnet"]')
-    if not download_links:
-        bot.reply_to(message, f"Sorry, no results found for '{title}'. Please try again with a different search term.")
-        return
+# Create a Telebot instance
+bot = telebot.TeleBot(TOKEN)
 
-    magnet_link = download_links[0]['href']
-    bot.reply_to(message, f"Here's the magnet link for '{title}': {magnet_link}")
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    bot.reply_to(message, 'Welcome to the Movie Search Bot! Send me the name of a movie to search for.')
 
-# Start the bot
-bot.polling()
+@bot.message_handler(func=lambda message: True)
+def search_movie(message):
+    # Get the movie name from the user's message
+    movie_name = message.text
+
+    try:
+        # Use the Pyrogram session to search for movies in the channel
+        with pyro_client:
+            # Join the channel where you have the movies
+            pyro_client.join_chat(movie_channel)
+
+            # Search for the movie in the channel
+            results = pyro_client.search_messages(movie_channel, movie_name)
+
+            # Check if any results were found
+            if results.total > 0:
+                # Get the first result
+                first_result = results[0]
+
+                # Check if the result is a document (file)
+                if first_result.document:
+                    # Send the file to the user
+                    bot.send_document(message.chat.id, first_result.document.file_id)
+                else:
+                    bot.reply_to(message, 'No movie file found.')
+            else:
+                bot.reply_to(message, 'No movie found.')
+
+    except UserNotParticipant:
+        bot.reply_to(message, 'Please join the movie channel to search for movies.')
+
+    except ChatAdminRequired:
+        bot.reply_to(message, 'I need admin access to search for movies in the channel.')
+
 # Start the bot
 bot.polling()
