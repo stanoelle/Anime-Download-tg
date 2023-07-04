@@ -30,45 +30,33 @@ app.start()
 
 # Define the movie search function
 
+
+
+# Start the Pyrogram Client
+# Define the movie search function
 @bot.message_handler(commands=['movie'])
-
 def search_movies(message):
-
     # Get the movie name from the user
-
     movie_name = message.text.replace('/movie ', '')
 
-
-
     # Search for movies in the channel https://t.me/moviessfreeee
-
     messages = app.search_messages('moviessfreeee', movie_name, filter='document')
 
-
-
     # If a file is found, send it to the user
-
-    if len(messages) > 0:
-
-        for message in messages:
-
-            for doc in message.document:
-
-                if doc.mime_type == "video/mkv":
-
-                    bot.send_document(message.chat.id, message.document.file_id)
-
-                    break
-
-            else:
-
-                continue
-
+    found = False
+    for message in messages:
+        for doc in message.document:
+            if doc.mime_type == "video/mp4":
+                bot.send_document(message.chat.id, message.document.file_id)
+                found = True
+                break
+        if found:
             break
-
-    else:
-
+    if not found:
         bot.reply_to(message, "No movies found. Please try again.")
+
+# Start the telebot
+bot.polling()
 
 
 
