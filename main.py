@@ -54,7 +54,7 @@ def search_movies(message):
 
             for doc in message.document:
 
-                if doc.mime_type == "video/mp4":
+                if doc.mime_type == "video/mkv":
 
                     bot.send_document(message.chat.id, message.document.file_id)
 
